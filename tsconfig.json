@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "typeRoots": ["./node_modules/@types"],
+    "target": "es2016",
+    "baseUrl": "src",
+    "outDir": "dist",
+    "paths": {
+      "@/*": ["./*"]
+    },
+
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "sourceMap": true,
+    "noImplicitAny": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
+  },
+  "include": ["src/**/*"]
+}
