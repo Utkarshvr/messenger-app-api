@@ -30,7 +30,6 @@ export default function isAuth(
 
       req.user = {
         _id: decoded._id,
-        picture: decoded.picture,
         username: decoded.username,
         primaryEmail: decoded.primaryEmail,
       };

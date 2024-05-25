@@ -1,7 +1,8 @@
 import { Router, json } from "express";
 import webhookRoute from "./webhook.routes";
 import userRoute from "./user.routes";
-import requestRoute from "./requests.routes";
+import friendRequestsRoute from "./friend-requests.routes";
+import friendsRoute from "./friends.routes";
 
 const rootRoute = Router();
 
@@ -14,6 +15,7 @@ rootRoute.get("/", (req, res) => {
 });
 
 rootRoute.use("/users", userRoute);
-rootRoute.use("/requests", requestRoute);
+rootRoute.use("/friend-requests", friendRequestsRoute);
+rootRoute.use("/friends", friendsRoute);
 
 export default rootRoute;

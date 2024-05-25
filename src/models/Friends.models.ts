@@ -2,12 +2,12 @@ import mongoose from "mongoose";
 
 const friendsSchema = new mongoose.Schema(
   {
-    sender: {
+    user1ID: {
       type: String,
       ref: "User",
       required: true,
     },
-    recipient: {
+    user2ID: {
       type: String,
       ref: "User",
       required: true,
@@ -16,6 +16,6 @@ const friendsSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-const Friends = mongoose.model("Request", friendsSchema);
+const Friends = mongoose.model("friends", friendsSchema);
 
 export default Friends;
