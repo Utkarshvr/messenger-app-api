@@ -4,7 +4,7 @@ import Users from "@/models/Users.models";
 import { Request, Response } from "express";
 
 export async function getUserRequests(req: Request, res: Response) {
-  const userID = "user_2gmBZCio3JBDsSZ7GRTCLbaFN93";
+  const userID = "user_2gx7CaoGsqHH7oMc1SK3cBE86Xe";
   const type = req.query.type;
 
   try {
@@ -27,7 +27,7 @@ export async function getUserRequests(req: Request, res: Response) {
 
 export async function createRequest(req: Request, res: Response) {
   // Get loggedin user's ID
-  const senderID = "user_2gmBZCio3JBDsSZ7GRTCLbaFN93";
+  const senderID = "user_2gx7CaoGsqHH7oMc1SK3cBE86Xe";
   const recipientID = req.params.recipientID;
   console.log({ recipientID });
   // Check if a user exists with recipientID
@@ -62,7 +62,7 @@ export async function createRequest(req: Request, res: Response) {
 
 export async function accpetRequest(req: Request, res: Response) {
   // Get loggedin user's ID
-  const userID = "user_2gmBZCio3JBDsSZ7GRTCLbaFN93";
+  const userID = "user_2gx7CaoGsqHH7oMc1SK3cBE86Xe";
   const requestID = req.params.requestID;
 
   try {
@@ -80,6 +80,7 @@ export async function accpetRequest(req: Request, res: Response) {
       recipient: request.recipient,
     });
     request.isAccepted = true;
+    await request.save();
 
     res.status(201).json({ msg: "Added to the friend list" });
   } catch (error) {
@@ -91,7 +92,7 @@ export async function accpetRequest(req: Request, res: Response) {
 export async function markRequestAsSeen(req: Request, res: Response) {
   // Get loggedin user's ID
   const requestID = req.params.requestID;
-  const userID = "user_2gmBZCio3JBDsSZ7GRTCLbaFN93";
+  const userID = "user_2gx7CaoGsqHH7oMc1SK3cBE86Xe";
 
   try {
     const request = await Requests.findById(requestID);

@@ -1,1 +1,3 @@
 ssh -R messenger-api:80:localhost:5000 serveo.net
+
+lt --port 5000 --subdomain messenger-api

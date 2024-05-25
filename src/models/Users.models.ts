@@ -15,10 +15,14 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: false,
     },
-    email: {
-      type: String,
+    email_addresses: {
+      type: Object,
       required: true,
       unique: true,
+    },
+    primaryEmailID: {
+      type: String,
+      required: false,
     },
     picture: {
       type: String,

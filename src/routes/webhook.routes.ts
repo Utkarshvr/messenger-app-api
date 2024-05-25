@@ -74,6 +74,7 @@ webhookRoute.post(
           email_addresses,
           username,
           image_url,
+          primary_email_address_id,
         } = evt.data;
 
         const user = await Users.findOne({ _id: clerkID });
@@ -83,7 +84,8 @@ webhookRoute.post(
             const user = await Users.create({
               _id: clerkID,
               createdAt: created_at,
-              email: email_addresses[0]?.email_address,
+              email_addresses,
+              primaryEmailID: primary_email_address_id,
               username,
               picture: image_url,
             });
@@ -118,6 +120,7 @@ webhookRoute.post(
             id: clerkID,
             username,
             email_addresses,
+            primary_email_address_id,
             image_url,
           } = evt.data;
 
@@ -128,14 +131,16 @@ webhookRoute.post(
             {
               $set: {
                 username,
-                email: email_addresses[0]?.email_address,
+                email_addresses,
                 picture: image_url,
+                primaryEmailID: primary_email_address_id,
               },
             }
           );
 
           console.log(`User with ID: ${clerkID} updated successfully`);
         } catch (error) {
+          console.log(error);
           console.log("Couldn't delete User", error);
         }
         break;
