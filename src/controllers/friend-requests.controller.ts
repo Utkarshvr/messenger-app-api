@@ -10,18 +10,40 @@ export async function getUserRequests(
 ) {
   // const userID = "user_2gx7CaoGsqHH7oMc1SK3cBE86Xe";
   const userID = req.user?._id;
-  const type: string = req.params.type;
+  const type = req.query.type;
 
   if (type && type !== "sent" && type !== "received")
     return res.status(400).json({ msg: "type parameter is not vaild" });
 
   try {
-    const receivedRequests = await FriendRequests.find({
-      ...(type === "received" ? { recipient: userID } : { sender: userID }),
+    const requests = await FriendRequests.find({
+      ...(type === "sent" ? { sender: userID } : { recipient: userID }),
       status: "pending",
-    }).populate("sender");
+    })
+      .populate("sender")
+      .populate("recipient");
 
-    res.json({ receivedRequests });
+    res.json({ requests });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ msg: `An Internal Error Occured` });
+  }
+}
+
+export async function getUserUnseenRequestsCount(
+  req: AuthenticatedRequest,
+  res: Response
+) {
+  const userID = req.user?._id;
+
+  try {
+    const unseen_requests = await FriendRequests.find({
+      recipient: userID,
+      status: "pending",
+      isSeenByReceiver: false,
+    });
+
+    res.json({ count: unseen_requests.length });
   } catch (error) {
     console.log(error);
     res.status(500).json({ msg: `An Internal Error Occured` });
