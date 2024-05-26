@@ -1,8 +1,8 @@
+import { Response } from "express";
+import { AuthenticatedRequest } from "@/types/express";
 import Friends from "@/models/Friends.models";
 import FriendRequests from "@/models/FriendRequests.models";
 import Users from "@/models/Users.models";
-import { Request, Response } from "express";
-import { AuthenticatedRequest } from "@/types/express";
 
 export async function getUserRequests(
   req: AuthenticatedRequest,
@@ -10,11 +10,14 @@ export async function getUserRequests(
 ) {
   // const userID = "user_2gx7CaoGsqHH7oMc1SK3cBE86Xe";
   const userID = req.user?._id;
-  console.log({ userID });
+  const type: string = req.params.type;
+
+  if (type && type !== "sent" && type !== "received")
+    return res.status(400).json({ msg: "type parameter is not vaild" });
 
   try {
     const receivedRequests = await FriendRequests.find({
-      recipient: userID,
+      ...(type === "received" ? { recipient: userID } : { sender: userID }),
       status: "pending",
     }).populate("sender");
 

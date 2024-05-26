@@ -24,6 +24,9 @@ export async function getAllSuggestedUsers(
 
   try {
     const users = await Users.find({ _id: { $ne: userID } });
+
+    // Get all those users which either I haven't send request yet or we are unfriend/rejected
+
     res.status(200).json({ users });
   } catch (error) {
     res.status(500).json({ message: "Error retrieving users", error });
