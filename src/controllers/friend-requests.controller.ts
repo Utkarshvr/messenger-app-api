@@ -72,11 +72,13 @@ export async function sendRequest(req: AuthenticatedRequest, res: Response) {
       });
 
       if (requestExists) {
+        console.log(requestExists.status);
         if (requestExists.status === "pending")
           return res.json({ msg: "Request is already pending!" });
         else if (requestExists.status === "accepted")
           return res.json({ msg: "Already friends!" });
         else {
+          console.log("THE ELSE CASE");
           requestExists.status = "pending";
           requestExists.isSeenByReceiver = false;
           requestExists.no_of_attempts = requestExists.no_of_attempts + 1;

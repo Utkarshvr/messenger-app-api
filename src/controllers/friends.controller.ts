@@ -1,10 +1,60 @@
 import FriendRequests from "@/models/FriendRequests.models";
 import Friends from "@/models/Friends.models";
-import { Request, Response } from "express";
+import { AuthenticatedRequest } from "@/types/express";
+import { Response } from "express";
 
-export async function removeFriend(req: Request, res: Response) {
+export async function getUsersFriends(
+  req: AuthenticatedRequest,
+  res: Response
+) {
+  const userID = req.user._id;
+  try {
+    const friends = await Friends.aggregate([
+      {
+        $match: {
+          $or: [{ user1ID: userID }, { user2ID: userID }],
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user1ID",
+          foreignField: "_id",
+          as: "user1",
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user2ID",
+          foreignField: "_id",
+          as: "user2",
+        },
+      },
+      {
+        $project: {
+          friend: {
+            $cond: {
+              if: { $eq: ["$user1ID", userID] },
+              then: { $arrayElemAt: ["$user2", 0] },
+              else: { $arrayElemAt: ["$user1", 0] },
+            },
+          },
+        },
+      },
+    ]);
+
+    res.json({ friends });
+  } catch (error) {
+    console.log("::Error Fetching Friends::", error);
+    res.status(500).json({ msg: `An Internal Error Occured`, error });
+  }
+}
+
+export async function removeFriend(req: AuthenticatedRequest, res: Response) {
+  const userID = req.user._id;
   const userToBeRemovedID = req.params.userID;
-  const userID = "user_2gx7CaoGsqHH7oMc1SK3cBE86Xe";
+
   if (userToBeRemovedID === userID)
     return res.status(400).json({ msg: `You can't remove yourself` });
 
