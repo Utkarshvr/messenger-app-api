@@ -7,13 +7,22 @@ const messageSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    recipient: {
-      type: String,
-      ref: "User",
+    conversation: {
+      type: mongoose.Types.ObjectId,
+      ref: "Convesation",
       required: true,
     },
-    text: { type: String, required: true },
-    isRead: { type: Boolean, default: false },
+
+    body: { type: String, required: false },
+    image: { type: String, required: false },
+
+    viewers: [
+      {
+        type: String,
+        ref: "User",
+        required: true,
+      },
+    ],
   },
   { timestamps: true }
 );

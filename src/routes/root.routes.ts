@@ -4,6 +4,7 @@ import userRoute from "./user.routes";
 import friendRequestsRoute from "./friend-requests.routes";
 import friendsRoute from "./friends.routes";
 import messagesRoute from "./messages.routes";
+import conversationsRoute from "./conversations.routes";
 
 const rootRoute = Router();
 
@@ -16,8 +17,11 @@ rootRoute.get("/", (req, res) => {
 });
 
 rootRoute.use("/users", userRoute);
-rootRoute.use("/messages", messagesRoute);
+
 rootRoute.use("/friend-requests", friendRequestsRoute);
 rootRoute.use("/friends", friendsRoute);
+
+rootRoute.use("/conversations", conversationsRoute);
+rootRoute.use("/messages", messagesRoute);
 
 export default rootRoute;
