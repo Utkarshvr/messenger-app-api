@@ -28,14 +28,26 @@ export async function getMessages(req: AuthenticatedRequest, res: Response) {
   }
 
   try {
-    const messages = await Messages.find({
+    const messages = (await Messages.find({
       conversation: conversationID,
-    }).populate({
-      path: "sender",
-      select: "_id username",
-    });
+    })
+      .populate({
+        path: "sender",
+        select: "_id username",
+      })
+      .lean()) as unknown as {
+      sender: {
+        _id: string;
+        username: string;
+      };
+    }[];
 
-    res.status(200).json({ messages });
+    const projectedMsgs = messages.map((msg) => ({
+      ...msg,
+      isSelf: msg.sender._id === currentUserID,
+    }));
+
+    res.status(200).json({ messages: projectedMsgs });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -69,6 +81,7 @@ export async function sendMessage(req: AuthenticatedRequest, res: Response) {
     await existingConv.updateOne({
       hasInitiated: true,
       lastMessage: message._id,
+      lastMessagedAt: new Date(),
     });
 
     res.status(201).json({ message });
@@ -82,10 +95,27 @@ export async function deleteMessage(req: AuthenticatedRequest, res: Response) {
   const messageID = req.params.messageID;
 
   try {
-    await Messages.findOneAndDelete({
+    // const existingConv = await Conversations.findById(conversationID);
+
+    // if (!existingConv)
+    //   return res
+    //     .status(400)
+    //     .json({ msg: "No Conversation found with the provided ID" });
+
+    const msg = await Messages.findOne({
       _id: messageID,
       sender: senderId,
     });
+    const existingConv = await Conversations.findOne({
+      _id: msg.conversation,
+      users: {
+        $in: [senderId],
+      },
+    });
+
+    await msg.deleteOne();
+    existingConv.lastMessagedAt = new Date();
+    await existingConv.save();
 
     res.status(200).json({ msg: "Message has been deleted!" });
   } catch (error) {
