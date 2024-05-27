@@ -12,7 +12,7 @@ export async function getUsersConversations(
   const currentUserID = req.user?._id;
 
   try {
-    const conversations = await await Conversations.find({
+    const conversations = await Conversations.find({
       hasInitiated: true,
       users: {
         $in: [currentUserID],
@@ -20,11 +20,36 @@ export async function getUsersConversations(
     })
       .populate({
         path: "users",
-        select: "_id username",
+        select: "_id username picture",
       })
       .populate("lastMessage");
 
     res.json({ conversations });
+  } catch (error) {
+    res.json({ error });
+  }
+}
+
+// GET
+export async function getConversationByID(
+  req: AuthenticatedRequest,
+  res: Response
+) {
+  const currentUserID = req.user?._id;
+  const conversationID = req.params.conversationID;
+
+  try {
+    const conversation = await Conversations.findOne({
+      _id: conversationID,
+      users: {
+        $in: [currentUserID],
+      },
+    }).populate({
+      path: "users",
+      select: "_id username picture",
+    });
+
+    res.json({ conversation });
   } catch (error) {
     res.json({ error });
   }
@@ -59,7 +84,7 @@ export async function createConversation(
     return res.status(400).json({ msg: "Invalid Data" });
 
   //   MAIN
-  if (isGroup) {
+  if (isGroup === true) {
     // Check if these users are friends
     for (const member of membersExcludingCurrentUser) {
       const friendShipExists = await areFriends(currentUserID, member?._id);

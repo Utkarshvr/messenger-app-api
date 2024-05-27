@@ -3,6 +3,7 @@ import isAuth from "@/middlewares/auth/isAuth";
 import {
   createConversation,
   deleteConversation,
+  getConversationByID,
   getUnseenMsgCountByConvID,
   getUsersConversations,
   markUnseenMsgsAsSeen,
@@ -11,6 +12,7 @@ const conversationsRoute = Router();
 
 conversationsRoute.use(isAuth);
 conversationsRoute.get("/", getUsersConversations);
+conversationsRoute.get("/:conversationID", getConversationByID);
 conversationsRoute.post("/", createConversation);
 
 conversationsRoute.get(
