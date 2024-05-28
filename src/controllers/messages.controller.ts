@@ -95,27 +95,54 @@ export async function deleteMessage(req: AuthenticatedRequest, res: Response) {
   const messageID = req.params.messageID;
 
   try {
-    // const existingConv = await Conversations.findById(conversationID);
-
-    // if (!existingConv)
-    //   return res
-    //     .status(400)
-    //     .json({ msg: "No Conversation found with the provided ID" });
-
+    // Find the message to be deleted
     const msg = await Messages.findOne({
       _id: messageID,
       sender: senderId,
     });
+    if (!msg) {
+      return res
+        .status(404)
+        .json({ error: "Message not found or you're not the sender." });
+    }
+
+    // Find the conversation the message belongs to
     const existingConv = await Conversations.findOne({
       _id: msg.conversation,
       users: {
         $in: [senderId],
       },
     });
+    if (!existingConv) {
+      return res.status(404).json({ error: "Conversation not found." });
+    }
 
+    const msgID = msg._id;
     await msg.deleteOne();
-    existingConv.lastMessagedAt = new Date();
-    await existingConv.save();
+
+    console.log(existingConv.lastMessage, msgID);
+
+    // If the message being deleted is the last message of the conversation
+    if (existingConv?.lastMessage?.toString() === msgID?.toString()) {
+      // Find the previous message using the createdAt date
+      const previousMsg = await Messages.findOne({
+        conversation: msg.conversation,
+        createdAt: { $lt: msg.createdAt }, // Messages created before the current message
+      }).sort({ createdAt: -1 }); // Sort by createdAt descending to get the most recent message before the deleted one
+
+      // Update the conversation's lastMessage and lastMessagedAt
+      if (previousMsg) {
+        await existingConv.updateOne({
+          lastMessage: previousMsg._id,
+          lastMessagedAt: previousMsg.createdAt,
+        });
+      } else {
+        await existingConv.updateOne({
+          lastMessage: null,
+          lastMessagedAt: null,
+        });
+      }
+    }
 
     res.status(200).json({ msg: "Message has been deleted!" });
   } catch (error) {
