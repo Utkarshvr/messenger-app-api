@@ -18,6 +18,9 @@ export async function getUsersConversations(
       users: {
         $in: [currentUserID],
       },
+      deletedBy: {
+        $nin: [currentUserID],
+      },
     })
       .sort({ lastMessagedAt: -1 })
       .populate({
@@ -255,6 +258,9 @@ export async function deleteConversation(
 
     const deletedBy = existingConv.deletedBy;
     const users = existingConv.users;
+
+    if (deletedBy.includes(currentUserID))
+      return res.json({ msg: "Already deleted" });
 
     const UsersWhoDidNotDeletedConvo = users.filter(
       (user) => user !== deletedBy.find((u) => u === user)

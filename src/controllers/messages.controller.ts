@@ -110,6 +110,17 @@ export async function sendMessage(req: AuthenticatedRequest, res: Response) {
       );
     }
 
+    if (existingConv.deletedBy.length > 0) {
+      existingConv.deletedBy.map(
+        async (user) =>
+          await pusher.trigger(user?.toString(), "conversation:new", {
+            ...existingConv.toJSON(),
+            lastMessage: message,
+            lastMessagedAt: message.createdAt,
+          })
+      );
+    }
+
     existingConv.users.map(
       async (user) =>
         await pusher.trigger(
@@ -126,6 +137,7 @@ export async function sendMessage(req: AuthenticatedRequest, res: Response) {
       hasInitiated: true,
       lastMessage: message._id,
       lastMessagedAt: new Date(),
+      deletedBy: [],
     });
 
     res.status(201).json({ message });
