@@ -1,3 +1,4 @@
+import pusher from "@/lib/pusher";
 import Conversations from "@/models/Conversations.models";
 import Messages from "@/models/Messages.models";
 import { AuthenticatedRequest } from "@/types/express";
@@ -18,6 +19,7 @@ export async function getUsersConversations(
         $in: [currentUserID],
       },
     })
+      .sort({ lastMessagedAt: -1 })
       .populate({
         path: "users",
         select: "_id username picture",
@@ -214,6 +216,14 @@ export async function markUnseenMsgsAsSeen(
         $push: { viewers: currentUserID },
       }
     );
+
+    await pusher.trigger(conversationID, "conversation:seen", {
+      viewer: currentUserID,
+    });
+
+    await pusher.trigger(`MESSAGES-${conversationID}`, "conversation:seen", {
+      viewer: currentUserID,
+    });
 
     res.json({
       msg: "All messages of this conversation have been marked as seen",

@@ -1,3 +1,4 @@
+import pusher from "@/lib/pusher";
 import Conversations from "@/models/Conversations.models";
 import Messages from "@/models/Messages.models";
 import { AuthenticatedRequest } from "@/types/express";
@@ -63,7 +64,9 @@ export async function sendMessage(req: AuthenticatedRequest, res: Response) {
     return res.status(400).json({ msg: "Provide at-least body or image" });
 
   try {
-    const existingConv = await Conversations.findById(conversationID);
+    const existingConv = await (
+      await Conversations.findById(conversationID)
+    ).populate({ path: "users", select: "_id username picture" });
 
     if (!existingConv)
       return res
@@ -78,6 +81,47 @@ export async function sendMessage(req: AuthenticatedRequest, res: Response) {
       viewers: [senderId],
     });
 
+    await pusher.trigger(existingConv._id.toString(), "messages:new", {
+      ...message.toJSON(),
+      sender: { _id: senderId },
+    });
+
+    await pusher.trigger(
+      `MESSAGES-${existingConv._id.toString()}`,
+      "messages:new",
+      {
+        ...message.toJSON(),
+        sender: { _id: senderId },
+      }
+    );
+
+    if (!existingConv.hasInitiated) {
+      existingConv.users.map(
+        async (user) =>
+          await pusher.trigger(
+            (user as unknown as { _id: string })?._id?.toString(),
+            "conversation:new",
+            {
+              ...existingConv.toJSON(),
+              lastMessage: message,
+              lastMessagedAt: message.createdAt,
+            }
+          )
+      );
+    }
+
+    existingConv.users.map(
+      async (user) =>
+        await pusher.trigger(
+          (user as unknown as { _id: string })?._id?.toString(),
+          "conversation:update",
+          {
+            _id: conversationID,
+            lastMessage: message,
+            lastMessagedAt: message.createdAt,
+          }
+        )
+    );
     await existingConv.updateOne({
       hasInitiated: true,
       lastMessage: message._id,
@@ -86,6 +130,7 @@ export async function sendMessage(req: AuthenticatedRequest, res: Response) {
 
     res.status(201).json({ message });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ error: error.message });
   }
 }
@@ -136,12 +181,48 @@ export async function deleteMessage(req: AuthenticatedRequest, res: Response) {
           lastMessage: previousMsg._id,
           lastMessagedAt: previousMsg.createdAt,
         });
+
+        await pusher.trigger(existingConv._id.toString(), "messages:delete", {
+          msgID,
+          previousMsg,
+        });
+        await pusher.trigger(
+          `MESSAGES-${existingConv._id.toString()}`,
+          "messages:delete",
+          {
+            msgID,
+            previousMsg,
+          }
+        );
       } else {
         await existingConv.updateOne({
           lastMessage: null,
           lastMessagedAt: null,
         });
+        await pusher.trigger(existingConv._id.toString(), "messages:delete", {
+          msgID,
+          previousMsg,
+        });
+        await pusher.trigger(
+          `MESSAGES-${existingConv._id.toString()}`,
+          "messages:delete",
+          {
+            msgID,
+            previousMsg: null,
+          }
+        );
       }
+    } else {
+      await pusher.trigger(existingConv._id.toString(), "messages:delete", {
+        msgID,
+      });
+      await pusher.trigger(
+        `MESSAGES-${existingConv._id.toString()}`,
+        "messages:delete",
+        {
+          msgID,
+        }
+      );
     }
 
     res.status(200).json({ msg: "Message has been deleted!" });

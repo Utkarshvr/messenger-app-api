@@ -3,6 +3,7 @@ import { AuthenticatedRequest } from "@/types/express";
 import Friends from "@/models/Friends.models";
 import FriendRequests from "@/models/FriendRequests.models";
 import Users from "@/models/Users.models";
+import pusher from "@/lib/pusher";
 
 export async function getUserRequests(
   req: AuthenticatedRequest,
@@ -84,6 +85,7 @@ export async function sendRequest(req: AuthenticatedRequest, res: Response) {
           requestExists.no_of_attempts = requestExists.no_of_attempts + 1;
           await requestExists.save();
 
+          await pusher.trigger(`REQ-${recipientID}`, "friend-requests:new", {});
           res.json({ msg: "Request is sent again!", request: requestExists });
         }
       } else {
@@ -91,6 +93,8 @@ export async function sendRequest(req: AuthenticatedRequest, res: Response) {
           sender: senderID,
           recipient: recipientID,
         });
+
+        await pusher.trigger(`REQ-${recipientID}`, "friend-requests:new", {});
         res.json({ msg: "Request sent!", request: newReq });
       }
     } catch (error) {
